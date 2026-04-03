@@ -500,7 +500,6 @@ function setupSummaryControlsAndSave() {
     lhSlider.removeEventListener("input", updateLineHeight);
     lhSlider.addEventListener("input", updateLineHeight);
     
-    // Save as Image button
     const saveBtn = document.getElementById("saveSummaryAsImageBtn");
     const newSaveBtn = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
@@ -538,7 +537,6 @@ function setupSummaryControlsAndSave() {
         });
     });        
     
-    // Share Image button
     const shareBtn = document.getElementById("shareSummaryImageBtn");
     const newShareBtn = shareBtn.cloneNode(true);
     shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
@@ -592,91 +590,10 @@ function setupSummaryControlsAndSave() {
         }
     });
 
-    // ✅ เพิ่ม Export PDF button
-    const pdfBtn = document.getElementById("exportSummaryPdfBtn");
-    if (pdfBtn) {
-        const newPdfBtn = pdfBtn.cloneNode(true);
-        pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
-        
-        newPdfBtn.addEventListener("click", function() {
-            exportSummaryToPDF();
-        });
-    }
-
     updateFontSize();
     updateLineHeight();
 }
-// ==============================================
-// ฟังก์ชัน Export PDF (เพิ่มใหม่)
-// ==============================================
 
-async function exportSummaryToPDF() {
-    const element = document.querySelector("#summaryModal .modal-content-container");
-
-    if (!element) {
-        showToast("❌ ไม่พบข้อมูลสรุป", "error");
-        return;
-    }
-
-    // ซ่อนปุ่มก่อน capture
-    const actionButtons = document.querySelector('.summary-action-buttons');
-    const controlGroups = document.querySelectorAll('.control-group');
-    const closeBtn = document.querySelector('.modal-close-btn');
-
-    if (actionButtons) actionButtons.style.display = 'none';
-    controlGroups.forEach(el => el.style.display = 'none');
-    if (closeBtn) closeBtn.style.display = 'none';
-
-    try {
-        showToast("⏳ กำลังสร้าง PDF...", "info");
-
-        const canvas = await html2canvas(element, {
-            scale: 3,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        });
-
-        const imgData = canvas.toDataURL("image/png");
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-
-        const pageWidth = 210;
-        const pageHeight = 297;
-
-        const imgWidth = pageWidth;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        // หน้าแรก
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // ถ้ายาวเกิน 1 หน้า
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
-
-        const fileName = `สรุป_${currentAccount || 'account'}_${Date.now()}.pdf`;
-        pdf.save(fileName);
-
-        showToast(`📄 บันทึก PDF สำเร็จ`, "success");
-
-    } catch (err) {
-        console.error(err);
-        showToast("❌ สร้าง PDF ไม่สำเร็จ", "error");
-    } finally {
-        // แสดงปุ่มกลับ
-        if (actionButtons) actionButtons.style.display = '';
-        controlGroups.forEach(el => el.style.display = '');
-        if (closeBtn) closeBtn.style.display = '';
-    }
-}
 // ==============================================
 // ฟังก์ชันจัดการ Firebase Sync
 // ==============================================

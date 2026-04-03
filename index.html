@@ -18,7 +18,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -420,7 +419,7 @@
               <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">📄 รายละเอียด</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">💰 จำนวนเงิน</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">🔧 การจัดการ</th>
-            </td>
+            </tr>
           </thead>
           <tbody id="recordBody" style="font-size: 14px;"></tbody>
         </table>
@@ -445,7 +444,7 @@
 </style>
 
 <footer>
-    &copy; 030469 accypshop. All Rights Reserved.
+    &copy; 120369 accypshop. All Rights Reserved.
 </footer>
 
 <div id="changePasswordModal" class="modal-overlay">
@@ -494,22 +493,21 @@
   <div class="modal-content-container">
     <div id="modalBodyContent" class="summaryResult">
       </div>
-    <div class="summary-action-buttons">
-      <button id="saveSummaryAsImageBtn">💾 บันทึกรูป</button>
-      <button id="shareSummaryImageBtn">📤 แชร์รูป</button>
-      <button id="exportSummaryPdfBtn" style="background:#dc3545;">📄 Export PDF</button>
-    </div>
-    <div class="control-group">
-      <label for="summaryFontSizeSlider">📏 ปรับขนาดตัวอักษร:</label>
-      <input type="range" id="summaryFontSizeSlider" min="0.5" max="1.5" step="0.05" value="1.0">
-      <span id="summaryFontSizeValue">ขนาด: 100%</span>
-    </div>
-    <div class="control-group">
-      <label for="summaryLineHeightSlider">📏 ปรับขนาดของบรรทัด:</label>
-      <input type="range" id="summaryLineHeightSlider" min="0.01" max="3" step="0.01" value="1.0">
-      <span id="summaryLineHeightValue">ความสูงของบรรทัด: 1.0</span>
-    </div>
-    <button onclick="closeSummaryModal()" class="modal-close-btn">❌ ปิดหน้าต่างนี้</button>
+<div class="summary-action-buttons">
+  <button id="saveSummaryAsImageBtn">💾 บันทึกรูป</button>
+  <button id="shareSummaryImageBtn">📤 แชร์รูป</button>
+</div>
+      <div class="control-group">
+        <label for="summaryFontSizeSlider">📏 ปรับขนาดตัวอักษร:</label>
+        <input type="range" id="summaryFontSizeSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+        <span id="summaryFontSizeValue">ขนาด: 100%</span>
+      </div>
+      <div class="control-group">
+        <label for="summaryLineHeightSlider">📏 ปรับขนาดของบรรทัด:</label>
+        <input type="range" id="summaryLineHeightSlider" min="0.01" max="3" step="0.01" value="1.0">
+        <span id="summaryLineHeightValue">ความสูงของบรรทัด: 1.0</span>
+      </div>
+      <button onclick="closeSummaryModal()" class="modal-close-btn">❌ ปิดหน้าต่างนี้</button>
     </div>
   </div>
 </div>
