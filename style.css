@@ -1616,8 +1616,3 @@ input[type="time"],
 #daily-summary-body td:nth-child(4) { /* คงเหลือ */
     font-weight: bold;
 }
-@media print {
-    body {
-        font-size: 12px;
-    }
-}

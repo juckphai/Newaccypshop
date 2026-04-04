@@ -453,10 +453,6 @@ function closeDateRangeExportModal() {
 // ฟังก์ชันจัดการ Summary Modal Controls
 // ==============================================
 
-// ==============================================
-// ฟังก์ชันจัดการ Summary Modal Controls
-// ==============================================
-
 function setupSummaryControlsAndSave() {
     const modalContentContainer = document.querySelector("#summaryModal .modal-content-container");
     const modalBody = document.getElementById("modalBodyContent");
@@ -504,7 +500,6 @@ function setupSummaryControlsAndSave() {
     lhSlider.removeEventListener("input", updateLineHeight);
     lhSlider.addEventListener("input", updateLineHeight);
     
-    // ===== ปุ่มบันทึกเป็นรูปภาพ =====
     const saveBtn = document.getElementById("saveSummaryAsImageBtn");
     const newSaveBtn = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
@@ -542,7 +537,6 @@ function setupSummaryControlsAndSave() {
         });
     });        
     
-    // ===== ปุ่มแชร์รูปภาพ =====
     const shareBtn = document.getElementById("shareSummaryImageBtn");
     const newShareBtn = shareBtn.cloneNode(true);
     shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
@@ -595,175 +589,6 @@ function setupSummaryControlsAndSave() {
             modalContentContainer.style.padding = '';
         }
     });
-
-    // ===== เพิ่มปุ่ม PDF (ใหม่) =====
-    const pdfBtn = document.getElementById("saveSummaryAsPDFBtn");
-    if (pdfBtn) {
-        const newPdfBtn = pdfBtn.cloneNode(true);
-        pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
-
-        newPdfBtn.addEventListener("click", async function () {
-            const actionButtons = document.querySelector('.summary-action-buttons');
-            const controlGroups = document.querySelectorAll('.control-group');
-            const closeBtn = document.querySelector('.modal-close-btn');
-
-            // ซ่อนปุ่มอื่นๆ ชั่วคราว
-            if(actionButtons) actionButtons.style.display = 'none';
-            controlGroups.forEach(el => el.style.display = 'none');
-            if(closeBtn) closeBtn.style.display = 'none';
-
-            try {
-                showToast("📄 กำลังเตรียมไฟล์ PDF...", "info");
-
-                // ดึง HTML เนื้อหาสรุป
-                const summaryContent = modalContentContainer.cloneNode(true);
-                
-                // ลบ padding ที่เพิ่มไว้
-                summaryContent.style.padding = '';
-
-                // สร้าง HTML สำหรับการพิมพ์ PDF
-                const printHTML = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>สรุปข้อมูลบัญชี ${currentAccount || ''}</title>
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <style>
-                            * {
-                                margin: 0;
-                                padding: 0;
-                                box-sizing: border-box;
-                            }
-                            body {
-                                font-family: 'Sarabun', 'TH Sarabun New', Tahoma, sans-serif;
-                                padding: 20px;
-                                background-color: white;
-                                font-size: 14px;
-                                line-height: 1.5;
-                            }
-                            .summaryResult {
-                                max-width: 100%;
-                                margin: 0 auto;
-                            }
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                margin: 10px 0;
-                            }
-                            th, td {
-                                border: 1px solid #ddd;
-                                padding: 8px;
-                                text-align: center;
-                                vertical-align: top;
-                            }
-                            th {
-                                background-color: #f2f2f2;
-                                font-weight: bold;
-                            }
-                            hr {
-                                margin: 10px 0;
-                                border: 0.5px solid #ddd;
-                            }
-                            p {
-                                margin: 5px 0;
-                            }
-                            @media print {
-                                body {
-                                    padding: 10px;
-                                }
-                                button, .no-print {
-                                    display: none !important;
-                                }
-                                @page {
-                                    size: A4;
-                                    margin: 1.5cm;
-                                }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="summaryResult">
-                            ${summaryContent.innerHTML}
-                        </div>
-                        <div style="text-align: center; font-size: 10px; color: #999; margin-top: 20px;">
-                            สรุปเมื่อ: ${new Date().toLocaleString('th-TH')}
-                        </div>
-                    </body>
-                    </html>
-                `;
-
-                // วิธีที่ 1: ใช้ window.print() (รองรับ PDF ทุกอุปกรณ์)
-                const printWindow = window.open('', '_blank');
-                if (printWindow) {
-                    printWindow.document.write(printHTML);
-                    printWindow.document.close();
-                    
-                    printWindow.onload = function() {
-                        setTimeout(() => {
-                            printWindow.focus();
-                            printWindow.print();
-                            showToast("📄 เปิดหน้าต่างพิมพ์ PDF เรียบร้อย", "success");
-                        }, 500);
-                    };
-                } else {
-                    // fallback: ใช้ iframe
-                    const iframe = document.createElement('iframe');
-                    iframe.style.position = 'absolute';
-                    iframe.style.width = '0';
-                    iframe.style.height = '0';
-                    iframe.style.border = 'none';
-                    document.body.appendChild(iframe);
-                    
-                    const iframeDoc = iframe.contentWindow.document;
-                    iframeDoc.write(printHTML);
-                    iframeDoc.close();
-                    
-                    iframe.contentWindow.onload = function() {
-                        setTimeout(() => {
-                            iframe.contentWindow.focus();
-                            iframe.contentWindow.print();
-                            setTimeout(() => {
-                                document.body.removeChild(iframe);
-                            }, 1000);
-                            showToast("📄 เปิดหน้าต่างพิมพ์ PDF เรียบร้อย", "success");
-                        }, 500);
-                    };
-                }
-
-            } catch (err) {
-                console.error("PDF Error:", err);
-                
-                // fallback: บันทึกเป็นรูปภาพแทน
-                showToast("⚠️ ไม่สามารถสร้าง PDF ได้ → บันทึกเป็นรูปภาพแทน", "warning");
-                
-                try {
-                    const canvas = await html2canvas(modalContentContainer, {
-                        scale: 5,
-                        backgroundColor: '#FAFAD2',
-                        useCORS: true
-                    });
-                    
-                    const link = document.createElement('a');
-                    const fileName = `สรุป_${currentAccount || 'account'}_${Date.now()}.png`;
-                    link.download = fileName;
-                    link.href = canvas.toDataURL("image/png");
-                    link.click();
-                    showToast(`🖼️ บันทึกภาพสรุปเป็น "${fileName}" สำเร็จ`, 'success');
-                } catch (canvasErr) {
-                    console.error("Canvas Error:", canvasErr);
-                    showToast("❌ ไม่สามารถบันทึกไฟล์ได้", 'error');
-                }
-            } finally {
-                // แสดงปุ่มต่างๆ กลับมา
-                setTimeout(() => {
-                    if(actionButtons) actionButtons.style.display = '';
-                    controlGroups.forEach(el => el.style.display = '');
-                    if(closeBtn) closeBtn.style.display = '';
-                }, 1000);
-            }
-        });
-    }
 
     updateFontSize();
     updateLineHeight();
