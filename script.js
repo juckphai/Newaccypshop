@@ -2302,9 +2302,6 @@ function generateSummaryData(startDate, endDate) {
 /**
  * สร้าง HTML สำหรับแสดงสรุป
  */
-/**
- * สร้าง HTML สำหรับแสดงสรุป
- */
 // [แก้ไขเต็มรูปแบบ] แสดงตารางสรุปแบบจำกัดจำนวนรายการ
 function buildOriginalSummaryHtml(context) {
     const { summaryResult, title, dateString, remark, transactionDaysInfo, type, thaiDateString, headerLine1, headerLine2, headerLine3, daysDiff, activeDays, showDetails, detailsLimit } = context;
@@ -2445,25 +2442,32 @@ function buildOriginalSummaryHtml(context) {
 /**
  * สร้าง HTML สำหรับ PDF
  */
+// [แก้ไขเต็มรูปแบบ] สร้าง HTML สำหรับ PDF แบบจำกัดจำนวนรายการ
 function buildPdfSummaryHtml(context) {
-    const { summaryResult, title, dateString, remark, transactionDaysInfo, type, thaiDateString, headerLine1, headerLine2, headerLine3, daysDiff, activeDays } = context;
+    const { summaryResult, title, dateString, remark, transactionDaysInfo, type, thaiDateString, headerLine1, headerLine2, headerLine3, daysDiff, activeDays, detailsLimit } = context;
     const { summary, periodRecords, totalBalance } = summaryResult;
     
     let incomeHTML = ''; 
-    for (const type in summary.income) { 
-        incomeHTML += `<p style="margin-left: 15px; line-height: 0.5;">- ${type} : ${summary.income[type].count} ครั้ง เป็นเงิน ${summary.income[type].amount.toLocaleString()} บาท</p>`; 
+    for (const typeKey in summary.income) { 
+        incomeHTML += `<p style="margin-left: 15px; line-height: 0.5;">- ${typeKey} : ${summary.income[typeKey].count} ครั้ง เป็นเงิน ${summary.income[typeKey].amount.toLocaleString()} บาท</p>`; 
     }
     
     let expenseHTML = ''; 
-    for (const type in summary.expense) { 
-        expenseHTML += `<p style="margin-left: 15px; line-height: 0.5;">- ${type} : ${summary.expense[type].count} ครั้ง เป็นเงิน ${summary.expense[type].amount.toLocaleString()} บาท</p>`; 
+    for (const typeKey in summary.expense) { 
+        expenseHTML += `<p style="margin-left: 15px; line-height: 0.5;">- ${typeKey} : ${summary.expense[typeKey].count} ครั้ง เป็นเงิน ${summary.expense[typeKey].amount.toLocaleString()} บาท</p>`; 
     }
     
     let recordsHTML = '';
     if (periodRecords.length > 0) {
+        // กรองแสดงเฉพาะรายการล่าสุดสำหรับ PDF
+        let displayRecords = periodRecords;
+        if (type === 'range' && detailsLimit && detailsLimit > 0) {
+            displayRecords = periodRecords.slice(-detailsLimit);
+        }
+
         recordsHTML = ` 
         <div style="margin-top: 20px;"> 
-        <h4>รายละเอียดธุรกรรม</h4> 
+        <h4>รายละเอียดธุรกรรม ${type === 'range' && detailsLimit && detailsLimit > 0 ? `(แสดง ${displayRecords.length} รายการล่าสุด)` : ''}</h4> 
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center;">
         <thead>
         <tr style="background-color: #f2f2f2;">
@@ -2475,7 +2479,7 @@ function buildPdfSummaryHtml(context) {
         </tr>
         </thead>
         <tbody>
-        ${periodRecords.map(record => {
+        ${displayRecords.map(record => {
             const { formattedDate, formattedTime } = formatDateForDisplay(record.dateTime);
             const isIncome = accountTypes.get(currentAccount)["รายรับ"].includes(record.type); 
             const color = isIncome ? "#4CAF50" : "#F44336";
@@ -2573,12 +2577,11 @@ function buildPdfSummaryHtml(context) {
     ${recordsHTML}
     `;
 }
-
 // ==============================================
 // ฟังก์ชันจัดการผลลัพธ์สรุป
 // ==============================================
 
-// [แก้ไขเต็มรูปแบบ] จัดการการส่งออกข้อมูลโดยส่งค่า limit รายการไปด้วย
+// [แก้ไขเต็มรูปแบบ] จัดการการส่งออกข้อมูลโดยส่งค่า limit รายการไปด้วย และรองรับ Daily Summary
 function handleSummaryOutput(choice) {
     if (!summaryContext) {
         console.error("Summary context is missing. Cannot proceed.");
@@ -2586,6 +2589,7 @@ function handleSummaryOutput(choice) {
         return;
     }
     
+    // --- 1. โหมด สรุปผลแต่ละวัน (Daily Summary) ---
     if (summaryContext.type === 'dailySummary') {
         if (choice === 'display') {
             const htmlForDisplay = buildDailySummaryHtml(summaryContext, false);
@@ -2613,12 +2617,12 @@ function handleSummaryOutput(choice) {
         return;
     }
 
+    // --- 2. โหมดปกติ (สรุปวันที่ถึงวันที่, สรุปวันนี้, ฯลฯ) ---
     if (choice === 'display') {
         const htmlForDisplay = buildOriginalSummaryHtml(summaryContext);
         openSummaryModal(htmlForDisplay);
     } else if (choice === 'xlsx') {
         const { summaryResult, title, dateString, remark, transactionDaysInfo, daysDiff, activeDays, detailsLimit, type } = summaryContext;
-        // ใช้ dateString เป็นชื่อช่วงเวลาถ้าไม่มี periodName
         const periodName = dateString; 
         const limitToPass = type === 'range' ? detailsLimit : null;
         exportSummaryToXlsx(summaryResult, title, dateString, remark, transactionDaysInfo, periodName, daysDiff, activeDays, limitToPass);
@@ -2641,6 +2645,7 @@ function handleSummaryOutput(choice) {
     }
     closeSummaryOutputModal();
 }
+
 // ==============================================
 // ✅ ฟังก์ชันใหม่สำหรับสรุปผลแต่ละวัน (เฉพาะผลสรุปเป็นตาราง)
 // ==============================================

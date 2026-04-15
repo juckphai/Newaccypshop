@@ -61,10 +61,11 @@
 <div style="text-align: center; margin-top: 5px;">
     <div class="container">
         <div style="width: 100%; max-width: 900px; margin: 10px auto;">
-<div id="user-status-bar" style="display:none; background-color: #e3f2fd; color: #0d47a1; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 15px; border: 1px solid #90caf9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div id="user-status-bar" style="display:none; background-color: #e3f2fd; color: #0d47a1; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 15px; border: 1px solid #90caf9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <span style="font-weight: normal;">👤 ผู้ใช้งานปัจจุบัน:</span> 
                 <span id="current-user-display" style="font-weight: bold; margin-left: 5px;">-</span>
             </div>
+            
             <div class="file-actions" style="display: flex; flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; width: 100%; max-width: 900px; margin: 0 auto;">
               
               <div class="file-button-wrapper" style="width: auto; margin: 0; display: flex;">
@@ -299,26 +300,53 @@
                       <label for="customDayMonth">วันที่:</label>
                       <input type="date" id="customDayMonth">
                     </div>
-
                   </div>
                   <div class="button-container" style="text-align: center; margin-top: 10px;">
                     <button type="button" onclick="summarizeByDayMonth()" style="background-color: #03a9f4;">📊 สรุปวันที่เลือก</button>
                   </div>
                 </div>
                 
+                <!-- 🟢 ส่วนที่ปรับปรุงตามคำแนะนำ: สรุปวันที่ถึงวันที่ + ย้อนหลัง X วัน -->
                 <div class="summary-subsection" style="text-align: center;">
                   <label class="summary-subsection-header">📆 สรุปวันที่ถึงวันที่</label>
-                  <div class="centered-date-form horizontal">
-                    <div class="centered-date-group">
-                      <label for="startDate">จากวันที่:</label>
-                      <input type="date" id="startDate">
-                    </div>
-                    <div class="centered-date-group">
-                      <label for="endDate">ถึงวันที่:</label>
-                      <input type="date" id="endDate">
+                  
+                  <!-- Radio Buttons สำหรับเลือกโหมด -->
+                  <div style="margin-top:10px; margin-bottom:10px; text-align:center;">
+                    <label style="margin-right:15px; cursor:pointer;">
+                      <input type="radio" name="summaryMode" value="range" checked onchange="toggleGeneralSummaryMode()"> เลือกช่วงวันที่
+                    </label>
+                    <label style="cursor:pointer;">
+                      <input type="radio" name="summaryMode" value="lastX" onchange="toggleGeneralSummaryMode()"> ย้อนหลัง X วัน
+                    </label>
+                  </div>
+
+                  <!-- Container สำหรับเลือกช่วงวันที่ (ค่าเริ่มต้นแสดง) -->
+                  <div id="generalRangeContainer">
+                    <div class="centered-date-form horizontal">
+                      <div class="centered-date-group">
+                        <label for="startDate">จากวันที่:</label>
+                        <input type="date" id="startDate">
+                      </div>
+                      <div class="centered-date-group">
+                        <label for="endDate">ถึงวันที่:</label>
+                        <input type="date" id="endDate">
+                      </div>
                     </div>
                   </div>
-                  <div style="text-align: center; margin-top: 8px;">
+
+                  <!-- Container สำหรับกรอกจำนวนวัน (ซ่อนไว้ก่อน) พร้อมปุ่มคำนวณและพรีวิว -->
+                  <div id="generalLastXContainer" style="display: none; margin-top:10px;">
+                    <label>จำนวนวัน: 
+                      <input type="number" id="summaryLastXDays" min="1" placeholder="เช่น 7, 30" style="width:100px; padding:5px;">
+                    </label>
+                    <button type="button" onclick="calculateGeneralLastXRange()" style="margin-left:10px; background-color:#28a745; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                      คำนวณช่วงวันที่
+                    </button>
+                    <div id="generalLastXPreview" style="margin-top:10px; font-weight:bold; color: #009688;"></div>
+                  </div>
+
+                  <!-- Checkbox แสดงรายละเอียด -->
+<div style="text-align: center; margin-top: 8px;">
                       <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 5px; color: #333;">
                           <input type="checkbox" id="showDetailsRange" onchange="document.getElementById('detailsLimitContainer').style.display = this.checked ? 'flex' : 'none'"> แสดงรายละเอียดรายการ
                       </label>
@@ -328,8 +356,57 @@
                           <span style="font-size: 13px; color: #333;">รายการ</span>
                       </div>
                   </div>
+
+                  <!-- ปุ่มสรุปข้อมูล -->
                   <div class="button-container" style="text-align: center; margin-top: 10px;">
                     <button type="button" onclick="summarize()" style="background-color: #009688;">📊 สรุปวันที่ถึงวันที่</button>
+                  </div>
+                </div>
+
+                <!-- ✅ ส่วน สรุปผลแต่ละวัน (คงเดิม) -->
+                <div id="daily-summary-section" class="summary-subsection card export-area" style="text-align: center; margin-top: 20px; border-top: 2px solid #4a90e2; padding-top: 15px;">
+                  <label class="summary-subsection-header" style="color: #4a90e2; font-size: 18px;">📊 สรุปผลแต่ละวัน</label>
+                  
+                  <!-- 🔷 โหมดการเลือกช่วงวันที่ -->
+                  <div style="margin-top:15px; text-align:center;">
+                    <div style="margin-bottom:10px;">
+                      <label>
+                        <input type="radio" name="dailyMode" value="range" checked onchange="toggleDailyMode()">
+                        เลือกช่วงวันที่เอง
+                      </label>
+                      <label style="margin-left:20px;">
+                        <input type="radio" name="dailyMode" value="lastX" onchange="toggleDailyMode()">
+                        แสดง X วันล่าสุด
+                      </label>
+                    </div>
+
+                    <!-- 🔹 ส่วนเลือกช่วงวันที่เอง (ค่าเริ่มต้น) -->
+                    <div id="rangeContainer">
+                      <div class="centered-date-form horizontal" style="justify-content: center;">
+                        <div class="centered-date-group">
+                          <label for="dailyStartDate">จากวันที่:</label>
+                          <input type="date" id="dailyStartDate">
+                        </div>
+                        <div class="centered-date-group">
+                          <label for="dailyEndDate">ถึงวันที่:</label>
+                          <input type="date" id="dailyEndDate">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 🔹 ส่วนใส่จำนวนวัน (ซ่อนไว้ก่อน) -->
+                    <div id="lastXContainer" style="display:none; margin-top:10px;">
+                      <label>จำนวนวัน:</label>
+                      <input type="number" id="lastXDays" min="1" placeholder="เช่น 7" style="width: 80px; padding: 5px;">
+                      <button onclick="calculateLastXRange()" style="margin-left:10px; background-color:#28a745; padding: 5px 10px;">
+                        คำนวณช่วงวันที่
+                      </button>
+                      <div id="lastXPreview" style="margin-top:10px; font-weight:bold;"></div>
+                    </div>
+
+                    <div class="button-container" style="margin-top: 15px;">
+                      <button onclick="showDailySummaryByRange()" style="background-color: #4a90e2;">📊 แสดงสรุปตามช่วงที่เลือก</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -353,6 +430,7 @@
         </table>
     </div>
 </div>
+
 <style>
     footer {
         position: fixed;
@@ -361,6 +439,12 @@
         text-align: center;
         padding: 10px 0;
         background-color: #FAFAD2; 
+    }
+    
+    .export-area {
+        background: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
     }
 </style>
 
@@ -524,6 +608,7 @@
     <div class="format-modal-buttons">
       <button class="btn-json" onclick="handleSingleDateExportAs('json')">📄 JSON (.json)</button>
       <button class="btn-csv" onclick="handleSingleDateExportAs('csv')">📊 CSV (.csv)</button>
+      <button class="btn-xlsx" onclick="handleSingleDateExportAs('xlsx')">📊 XLSX (.xlsx)</button>
       <button class="btn-cancel" onclick="closeSingleDateExportFormatModal()">❌ ยกเลิก</button>
     </div>
   </div>
@@ -618,5 +703,66 @@ const firebaseConfig = {
     }
   }
 </script>
+
+<!-- เพิ่มฟังก์ชัน toggleGeneralSummaryMode และ calculateGeneralLastXRange ให้สมบูรณ์ -->
+<script>
+  // ฟังก์ชันสลับโหมดสำหรับการสรุปแบบกำหนดเอง
+  function toggleGeneralSummaryMode() {
+    const mode = document.querySelector('input[name="summaryMode"]:checked').value;
+    const rangeContainer = document.getElementById('generalRangeContainer');
+    const lastXContainer = document.getElementById('generalLastXContainer');
+    const previewContainer = document.getElementById('generalLastXPreview');
+    
+    if (mode === 'lastX') {
+        if(rangeContainer) rangeContainer.style.display = 'none';
+        if(lastXContainer) lastXContainer.style.display = 'block';
+    } else {
+        if(rangeContainer) rangeContainer.style.display = 'block';
+        if(lastXContainer) lastXContainer.style.display = 'none';
+    }
+    
+    // เคลียร์ข้อความพรีวิวทุกครั้งที่สลับโหมด
+    if(previewContainer) previewContainer.innerHTML = '';
+  }
+
+  /**
+   * คำนวณช่วงวันที่สำหรับ X วันล่าสุด (โหมดสรุปวันที่ถึงวันที่)
+   */
+  function calculateGeneralLastXRange() {
+    const daysInput = document.getElementById('summaryLastXDays').value;
+    const days = parseInt(daysInput);
+    
+    if (!days || days <= 0) {
+        showToast('⚠️ กรุณาระบุจำนวนวันที่ต้องการย้อนหลังให้ถูกต้อง', 'error');
+        return;
+    }
+    
+    // คำนวณวันที่ย้อนหลัง (นับจากวันนี้)
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - days + 1);
+    
+    // แปลงรูปแบบเป็น YYYY-MM-DD เพื่อยัดลง input type="date"
+    const endStr = today.toISOString().split('T')[0];
+    const startStr = start.toISOString().split('T')[0];
+    
+    // เซ็ตค่าลงในช่อง Input แบบเงียบๆ เพื่อให้ฟังก์ชัน summarize() ดึงไปใช้ต่อได้ทันที
+    document.getElementById('startDate').value = startStr;
+    document.getElementById('endDate').value = endStr;
+    
+    // แปลงเป็นวันที่แบบไทยเพื่อแสดงผล Preview ให้สวยงาม
+    const thaiStart = new Date(startStr).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+    const thaiEnd = new Date(endStr).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+    
+    // แสดงพรีวิว
+    document.getElementById('generalLastXPreview').innerHTML = `ช่วงวันที่: ${thaiStart} ถึง ${thaiEnd}`;
+    
+    showToast('✅ คำนวณช่วงวันที่เรียบร้อย', 'success');
+  }
+
+  // (หมายเหตุ: ฟังก์ชัน toggleDailyMode และ calculateLastXRange สำหรับส่วนสรุปแต่ละวัน 
+  // จะต้องอยู่ใน script.js อยู่แล้ว หากไม่มี ให้เพิ่มใน script.js ตามที่เคยแนะนำ)
+</script>
+
 </body>
 </html>
