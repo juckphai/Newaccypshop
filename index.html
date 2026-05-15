@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -561,7 +560,7 @@
   }
   @media (min-width: 500px) {
     #exportOptionsModal .grid-buttons {
-      grid-template-columns: 1fr 1fr; /* คอมพิวเตอร์แสดง 2 คอลัมน์ */
+      grid-template-columns: 1fr 1fr;
     }
   }
 
@@ -602,7 +601,7 @@
   }
   @media (min-width: 500px) {
     #exportOptionsModal .form-row {
-      flex-direction: row; /* คอมพิวเตอร์แสดงกล่องวันที่คู่กัน */
+      flex-direction: row;
     }
     #exportOptionsModal .form-row > div {
       flex: 1;
@@ -707,7 +706,9 @@
           </button>
         </div>
       </div>
-    </div> <div class="form-row" style="margin-top: 20px;">
+    </div>
+    
+    <div class="form-row" style="margin-top: 20px;">
       <button type="button" class="action-btn" onclick="exportJsonByDateRange()" style="background-color: #009688; flex: 2; font-size: 1rem;">
         ✅ ยืนยันบันทึก JSON
       </button>
@@ -718,6 +719,7 @@
 
   </div>
 </div>
+
 <div id="formatSelectionModal" class="modal-overlay">
   <div class="format-modal-content">
     <h3>📁 เลือกรูปแบบไฟล์สำหรับบันทึกทั้งหมด</h3>
@@ -737,6 +739,62 @@
       <button class="btn-csv" onclick="handleSingleDateExportAs('csv')">📊 CSV (.csv)</button>
       <button class="btn-xlsx" onclick="handleSingleDateExportAs('xlsx')">📊 XLSX (.xlsx)</button>
       <button class="btn-cancel" onclick="closeSingleDateExportFormatModal()">❌ ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL สำหรับ 📅 เฉพาะวันที่เลือก (Single Date Export) ========== -->
+<div id="singleDateExportModal" class="modal-overlay" style="display: none;">
+  <div class="format-modal-content export-modal-wrapper">
+    <h3 class="modal-header-title">📅 บันทึกข้อมูลรายวัน</h3>
+    <div style="text-align: center; margin-bottom: 15px;">
+      <span style="color: #666;">บัญชีที่เลือก: </span>
+      <span id="singleDateAccountName" style="font-weight:bold; color:#009688; background: #e0f2f1; padding: 4px 12px; border-radius: 12px; display: inline-block;"></span>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <label for="exportSingleDate" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444; font-size: 0.9rem;">เลือกวันที่ต้องการบันทึก:</label>
+      <input type="date" id="exportSingleDate" class="input-field">
+    </div>
+    
+    <div class="form-row">
+      <button onclick="processSingleDateExport()" class="action-btn" style="background-color: #009688; flex: 1;">
+        ✅ ยืนยัน
+      </button>
+      <button onclick="closeSingleDateExportModal()" class="action-btn" style="background-color: #e74c3c; flex: 1; box-shadow: none;">
+        ❌ ยกเลิก
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL สำหรับ 📆 ตามช่วงวันที่ (Date Range Export) ========== -->
+<div id="dateRangeExportModal" class="modal-overlay" style="display: none;">
+  <div class="format-modal-content export-modal-wrapper">
+    <h3 class="modal-header-title">📆 บันทึกข้อมูลตามช่วงวันที่</h3>
+    <div style="text-align: center; margin-bottom: 15px;">
+      <span style="color: #666;">บัญชีที่เลือก: </span>
+      <span id="dateRangeAccountName" style="font-weight:bold; color:#8e44ad; background: #f3e5f5; padding: 4px 12px; border-radius: 12px; display: inline-block;"></span>
+    </div>
+    
+    <div class="form-row" style="margin-bottom: 20px;">
+      <div>
+        <label for="exportStartDate" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444; font-size: 0.9rem;">จากวันที่:</label>
+        <input type="date" id="exportStartDate" class="input-field">
+      </div>
+      <div>
+        <label for="exportEndDate" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444; font-size: 0.9rem;">ถึงวันที่:</label>
+        <input type="date" id="exportEndDate" class="input-field">
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <button onclick="processDateRangeExport()" class="action-btn" style="background-color: #8e44ad; flex: 1;">
+        ✅ ยืนยัน
+      </button>
+      <button onclick="closeDateRangeExportModal()" class="action-btn" style="background-color: #e74c3c; flex: 1; box-shadow: none;">
+        ❌ ยกเลิก
+      </button>
     </div>
   </div>
 </div>
