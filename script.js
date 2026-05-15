@@ -412,6 +412,11 @@ function closeSummaryModal() {
 
 function openExportOptionsModal() { 
     document.getElementById('exportOptionsModal').style.display = 'flex'; 
+    // ✅ เพิ่มชื่อบัญชีอัตโนมัติ
+    const exportAccountNameEl = document.getElementById('exportAccountName');
+    if (exportAccountNameEl) {
+        exportAccountNameEl.textContent = currentAccount || '-';
+    }
     showToast("💾 เปิดหน้าต่างบันทึกข้อมูลเรียบร้อย", 'info');
 }
 
@@ -1948,20 +1953,20 @@ function displayRecords() {
             auditInfo += `<br><span style="font-size: 11px; color: #d9534f;">แก้ไข: ${record.editedBy}</span>`;
         }
 
-        const row = document.createElement('tr'); 
+const row = document.createElement('tr'); 
         row.innerHTML = ` 
-        <td>${formattedDate}</td> 
-        <td>${formattedTime}</td> 
-        <td>${record.type}</td> 
-        <td>${record.description}</td> 
-        <td>${record.amount.toLocaleString()} บาท</td> 
-        <td style="line-height: 1.2; text-align: center;">${auditInfo}</td>
-        <td> 
-        <button onclick="editRecord(${originalIndex})">แก้ไข</button> 
-        <button onclick="deleteRecord(${originalIndex})">ลบ</button> 
-        </td> 
+            <td>${formattedDate}</td> 
+            <td>${formattedTime}</td> 
+            <td>${record.type}</td> 
+            <td>${record.description}</td> 
+            <td>${record.amount.toLocaleString()} บาท</td> 
+            <td style="line-height: 1.2; text-align: center;">${auditInfo}</td> 
+            <td> 
+                <button onclick="editRecord(${originalIndex})">แก้ไข</button> 
+                <button onclick="deleteRecord(${originalIndex})">ลบ</button> 
+            </td> 
         `; 
-        recordBody.appendChild(row); 
+        recordBody.appendChild(row);
     }); 
     
     if (filteredRecords.length === 0) { 
@@ -2329,14 +2334,14 @@ function buildOriginalSummaryHtml(context) {
         recordsHTML = ` 
         <div style="margin-top: 20px;"> 
         <h4 style="border-bottom: 1px solid #ddd; padding-bottom: 5px;">${headerLine3 || 'รายละเอียดรายการ'} ${type === 'range' && detailsLimit && detailsLimit > 0 ? `<span style="font-size: 0.8em; color: #e91e63;">(แสดง ${displayRecords.length} รายการล่าสุด)</span>` : ''}</h4> 
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;"> 
+<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"> 
         <thead><tr style="background-color: #f2f2f2;">
         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">วัน/เวลา</th>
         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">ประเภท</th>
         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">รายละเอียด</th>
         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">จำนวนเงิน</th>
-        </tr></thead> 
-        <tbody> 
+         </tr></thead> 
+        <tbody>
         ${displayRecords.map(record => {
             const { formattedDate, formattedTime } = formatDateForDisplay(record.dateTime);
             const isIncome = accountTypes.get(currentAccount)["รายรับ"].includes(record.type); 
@@ -2344,12 +2349,13 @@ function buildOriginalSummaryHtml(context) {
             
             const displayTime = (type === 'range') ? `${formattedDate} ${formattedTime}` : formattedTime;
 
-            return `<tr>
+            return `
+            <tr>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${displayTime}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${record.type}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${record.description}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center; color: ${color}; font-weight: bold;">${record.amount.toLocaleString()}</td>
-            </tr>`;
+             </tr>`;
         }).join('')} 
         </tbody> 
         </table> 
@@ -2476,7 +2482,7 @@ function buildPdfSummaryHtml(context) {
         <th style="width: 15%; padding: 4px; border: 1px solid #ddd;">ประเภท</th>
         <th style="width: 30%; padding: 4px; border: 1px solid #ddd;">รายละเอียด</th>
         <th style="width: 15%; padding: 4px; border: 1px solid #ddd;">จำนวนเงิน</th>
-        </tr>
+          </tr>
         </thead>
         <tbody>
         ${displayRecords.map(record => {
@@ -2491,7 +2497,7 @@ function buildPdfSummaryHtml(context) {
             <td style="padding: 4px; border: 1px solid #ddd; word-wrap: break-word;">${record.type}</td>
             <td style="padding: 4px; border: 1px solid #ddd; word-wrap: break-word;">${record.description}</td>
             <td style="padding: 4px; border: 1px solid #ddd; color: ${color}; font-weight: bold; word-wrap: break-word;">${record.amount.toLocaleString()}</td>
-            </tr>`;
+             </tr>`;
         }).join('')} 
         </tbody> 
         </table> 
@@ -3037,6 +3043,148 @@ function showNoDataAlert(startDateStr, endDateStr) {
 }
 
 // ==============================================
+// ✅ ฟังก์ชันใหม่สำหรับ Export JSON ตามช่วงวันที่ (แก้ไขบั๊ก Timezone + รองรับยอดยกมา)
+// ==============================================
+
+/**
+ * คำนวณช่วงย้อนหลัง X วัน
+ */
+function calculateDaysBackDates() {
+    const days = parseInt(document.getElementById('daysBackInput').value);
+    
+    if (isNaN(days) || days <= 0) {
+        showToast('❌ กรุณากรอกจำนวนวันที่ถูกต้อง', 'error');
+        return;
+    }
+
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+
+    const formatDate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    const startDateInput = document.getElementById('jsonStartDate');
+    const endDateInput = document.getElementById('jsonEndDate');
+    
+    if (startDateInput) startDateInput.value = formatDate(startDate);
+    if (endDateInput) endDateInput.value = formatDate(endDate);
+
+    showToast(`📅 คำนวณย้อนหลัง ${days} วันเรียบร้อย`, 'success');
+}
+
+/**
+ * Export JSON ตามช่วงวันที่ (พร้อมออปชั่น ยอดยกมา) - แก้ไขบั๊ก Timezone
+ */
+function exportJsonByDateRange() {
+    if (!currentAccount) {
+        showToast('❌ กรุณาเลือกบัญชี', 'error');
+        return;
+    }
+
+    const startDate = document.getElementById('jsonStartDate')?.value;
+    const endDate = document.getElementById('jsonEndDate')?.value;
+    const includeCarryForward = document.getElementById('includeCarryForward')?.checked;
+
+    if (!startDate || !endDate) {
+        showToast('❌ กรุณาเลือกช่วงวันที่', 'error');
+        return;
+    }
+
+    // [แก้ไข] หั่นสตริงวันที่ตรงๆ ป้องกันบั๊ก Timezone ของเบราว์เซอร์เลื่อนเวลา
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+
+    const [ey, em, ed] = endDate.split('-').map(Number);
+    const end = new Date(ey, em - 1, ed, 23, 59, 59, 999);
+
+    let filteredRecords = [];
+    let carryForwardIncome = 0;
+    let carryForwardExpense = 0;
+
+    const baseTypes = accountTypes.get(currentAccount) || { "รายรับ": [], "รายจ่าย": [] };
+    let exportTypes = JSON.parse(JSON.stringify(baseTypes)); 
+
+    records.forEach(record => {
+        if (record.account !== currentAccount) return;
+
+        const recordDate = parseLocalDateTime(record.dateTime);
+
+        if (recordDate >= start && recordDate <= end) {
+            filteredRecords.push(record);
+        } else if (includeCarryForward && recordDate < start) {
+            if (baseTypes["รายรับ"].includes(record.type)) {
+                carryForwardIncome += parseFloat(record.amount);
+            } else if (baseTypes["รายจ่าย"].includes(record.type)) {
+                carryForwardExpense += parseFloat(record.amount);
+            }
+        }
+    });
+
+    if (includeCarryForward) {
+        const netBalance = carryForwardIncome - carryForwardExpense;
+        
+        if (netBalance !== 0) {
+            const cfType = "ยอดยกมา";
+            const isIncome = netBalance > 0;
+            
+            if (isIncome && !exportTypes["รายรับ"].includes(cfType)) exportTypes["รายรับ"].push(cfType);
+            if (!isIncome && !exportTypes["รายจ่าย"].includes(cfType)) exportTypes["รายจ่าย"].push(cfType);
+
+            // เซ็ตเวลาให้บิลยอดยกมาอยู่ตอนเที่ยงคืนตรงของวันเริ่มต้น
+            const cfDateTime = `${sy}-${String(sm).padStart(2, '0')}-${String(sd).padStart(2, '0')} 00:00`;
+
+            const carryForwardRecord = {
+                id: "CF_" + Date.now(),
+                dateTime: cfDateTime,
+                type: cfType,
+                description: "ยอดยกมาจากรอบบัญชีก่อนหน้า",
+                amount: Math.abs(netBalance),
+                account: currentAccount,
+                createdBy: "System",
+                createdTime: new Date().toISOString(),
+                editedBy: null,
+                editedTime: null
+            };
+
+            filteredRecords.unshift(carryForwardRecord); 
+        }
+    }
+
+    if (filteredRecords.length === 0) {
+        showToast('❌ ไม่พบข้อมูลในช่วงวันที่เลือก', 'warning');
+        return;
+    }
+
+    const exportData = {
+        accountName: currentAccount,
+        isDateRangeExport: true,
+        exportStartDate: startDate,
+        exportEndDate: endDate,
+        recordCount: filteredRecords.length,
+        exportTimestamp: new Date().toISOString(),
+        records: filteredRecords,
+        accountTypes: exportTypes
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    
+    const cfText = includeCarryForward ? "_รวมยอดยกมา" : "";
+    const fileName = `${currentAccount}_${startDate}_ถึง_${endDate}${cfText}.json`;
+    
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+
+    showToast(`💾 บันทึก JSON ${filteredRecords.length} รายการสำเร็จ`, 'success');
+}
+
+// ==============================================
 // ฟังก์ชันจัดการไฟล์ (บันทึก/โหลด)
 // ==============================================
 
@@ -3410,11 +3558,11 @@ async function handleSingleDateExportAs(format) {
 }
 
 // ==============================================
-// ฟังก์ชันจัดการการนำเข้าไฟล์
+// ฟังก์ชันจัดการการนำเข้าไฟล์ (ปรับปรุงให้รองรับการล้างข้อมูลเมื่อเจอ "ยอดยกมา")
 // ==============================================
 
 /**
- * โหลดข้อมูลจากไฟล์ (ปรับปรุงให้รองรับ ID)
+ * โหลดข้อมูลจากไฟล์ (ปรับปรุงให้รองรับ ID และการตรวจจับยอดยกมา)
  */
 async function loadFromFile(event) {
     const file = event.target.files[0]; 
@@ -3471,16 +3619,37 @@ async function loadFromFile(event) {
                     }
                 } else if (finalDataToMerge.isDateRangeExport === true) {
                     const { accountName, exportStartDate, exportEndDate, records: recordsToAdd, accountTypes: importedAccountTypes } = finalDataToMerge;
-                    const confirmMsg = `ไฟล์นี้มีข้อมูลของบัญชี "${accountName}" ระหว่างวันที่ ${exportStartDate} ถึง ${exportEndDate} จำนวน ${recordsToAdd.length} รายการ\n\n✅ ไฟล์นี้มีข้อมูลประเภทบัญชีพร้อมใช้งาน\n\nกด OK เพื่อ "เพิ่ม" รายการเหล่านี้ลงในบัญชี (ข้อมูลซ้ำจะถูกข้าม)\nกด Cancel เพื่อยกเลิก`;
                     
-                    if (confirm(confirmMsg)) {
-                        processDateRangeImport({
-                            accountName: accountName,
-                            exportStartDate: exportStartDate,
-                            exportEndDate: exportEndDate,
-                            records: recordsToAdd,
-                            accountTypes: importedAccountTypes
-                        });
+                    // [แก้ไข] ตรวจสอบว่าไฟล์นี้มีการสร้าง "ยอดยกมา" หรือไม่
+                    const hasCarryForward = recordsToAdd.some(r => r.type === "ยอดยกมา");
+
+                    if (hasCarryForward) {
+                        const confirmMsg = `ไฟล์นี้มีการตัดบัญชีพร้อม "ยอดยกมา" ของบัญชี "${accountName}"\n\n⚠️ เพื่อป้องกันยอดซ้ำซ้อน ระบบจำเป็นต้อง "ล้างข้อมูลเก่าทั้งหมด" ในบัญชีนี้ เพื่อแทนที่ด้วยข้อมูลชุดนี้\n\nคุณต้องการแทนที่ข้อมูลเพื่อตัดยอดบัญชีใช่หรือไม่?`;
+                        
+                        if (confirm(confirmMsg)) {
+                            // ล้างข้อมูลเก่าของบัญชีนี้ออกทั้งหมดก่อน
+                            records = records.filter(r => r.account !== accountName);
+                            
+                            processDateRangeImport({
+                                accountName: accountName,
+                                exportStartDate: exportStartDate,
+                                exportEndDate: exportEndDate,
+                                records: recordsToAdd,
+                                accountTypes: importedAccountTypes
+                            });
+                        }
+                    } else {
+                        const confirmMsg = `ไฟล์นี้มีข้อมูลของบัญชี "${accountName}" ระหว่างวันที่ ${exportStartDate} ถึง ${exportEndDate} จำนวน ${recordsToAdd.length} รายการ\n\n✅ ไฟล์นี้มีข้อมูลประเภทบัญชีพร้อมใช้งาน\n\nกด OK เพื่อ "เพิ่ม" รายการเหล่านี้ลงในบัญชี (ข้อมูลซ้ำจะถูกข้าม)\nกด Cancel เพื่อยกเลิก`;
+                        
+                        if (confirm(confirmMsg)) {
+                            processDateRangeImport({
+                                accountName: accountName,
+                                exportStartDate: exportStartDate,
+                                exportEndDate: exportEndDate,
+                                records: recordsToAdd,
+                                accountTypes: importedAccountTypes
+                            });
+                        }
                     }
                 } else if (finalDataToMerge.accountName) {
                     const confirmMsg = `ไฟล์นี้เป็นข้อมูลของบัญชี "${finalDataToMerge.accountName}"\n\nกด OK เพื่อ "แทนที่" ข้อมูลทั้งหมดของบัญชีนี้\nกด Cancel เพื่อยกเลิก`;
