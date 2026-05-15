@@ -3078,7 +3078,7 @@ function calculateDaysBackDates() {
 }
 
 /**
- * Export JSON ตามช่วงวันที่ (พร้อมออปชั่น ยอดยกมา) - แก้ไขบั๊ก Timezone
+ * Export JSON ตามช่วงวันที่ (พร้อมออปชั่น ยอดยกมา)
  */
 function exportJsonByDateRange() {
     if (!currentAccount) {
@@ -3095,7 +3095,7 @@ function exportJsonByDateRange() {
         return;
     }
 
-    // [แก้ไข] หั่นสตริงวันที่ตรงๆ ป้องกันบั๊ก Timezone ของเบราว์เซอร์เลื่อนเวลา
+    // หั่นสตริงวันที่ตรงๆ ป้องกันบั๊ก Timezone ของเบราว์เซอร์เลื่อนเวลา
     const [sy, sm, sd] = startDate.split('-').map(Number);
     const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
 
@@ -3125,34 +3125,33 @@ function exportJsonByDateRange() {
         }
     });
 
+    // [แก้ไข] สร้างบิล "ยอดยกมา" เสมอเมื่อมีการติ๊กเลือก (แม้ยอดจะเป็น 0 ก็ตาม)
     if (includeCarryForward) {
         const netBalance = carryForwardIncome - carryForwardExpense;
         
-        if (netBalance !== 0) {
-            const cfType = "ยอดยกมา";
-            const isIncome = netBalance > 0;
-            
-            if (isIncome && !exportTypes["รายรับ"].includes(cfType)) exportTypes["รายรับ"].push(cfType);
-            if (!isIncome && !exportTypes["รายจ่าย"].includes(cfType)) exportTypes["รายจ่าย"].push(cfType);
+        const cfType = "ยอดยกมา";
+        const isIncome = netBalance >= 0; // ถ้ายอดเหลือ 0 ให้ถือเป็นฝั่งรายรับ
+        
+        if (isIncome && !exportTypes["รายรับ"].includes(cfType)) exportTypes["รายรับ"].push(cfType);
+        if (!isIncome && !exportTypes["รายจ่าย"].includes(cfType)) exportTypes["รายจ่าย"].push(cfType);
 
-            // เซ็ตเวลาให้บิลยอดยกมาอยู่ตอนเที่ยงคืนตรงของวันเริ่มต้น
-            const cfDateTime = `${sy}-${String(sm).padStart(2, '0')}-${String(sd).padStart(2, '0')} 00:00`;
+        // เซ็ตเวลาให้บิลยอดยกมาอยู่ตอนเที่ยงคืนตรงของวันเริ่มต้น
+        const cfDateTime = `${sy}-${String(sm).padStart(2, '0')}-${String(sd).padStart(2, '0')} 00:00`;
 
-            const carryForwardRecord = {
-                id: "CF_" + Date.now(),
-                dateTime: cfDateTime,
-                type: cfType,
-                description: "ยอดยกมาจากรอบบัญชีก่อนหน้า",
-                amount: Math.abs(netBalance),
-                account: currentAccount,
-                createdBy: "System",
-                createdTime: new Date().toISOString(),
-                editedBy: null,
-                editedTime: null
-            };
+        const carryForwardRecord = {
+            id: "CF_" + Date.now(),
+            dateTime: cfDateTime,
+            type: cfType,
+            description: "ยอดยกมาจากรอบบัญชีก่อนหน้า",
+            amount: Math.abs(netBalance),
+            account: currentAccount,
+            createdBy: "System",
+            createdTime: new Date().toISOString(),
+            editedBy: null,
+            editedTime: null
+        };
 
-            filteredRecords.unshift(carryForwardRecord); 
-        }
+        filteredRecords.unshift(carryForwardRecord); 
     }
 
     if (filteredRecords.length === 0) {
