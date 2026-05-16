@@ -3213,8 +3213,10 @@ function saveDataAndShowToast(entryCategory = 'neutral') {
 
 /**
  * บันทึกข้อมูลลง Local Storage
+ * @param {boolean} fromPasswordSave - มาจากการกดบันทึกรหัสผ่านหรือไม่
+ * @param {boolean} isManualAction - มาจากการกดปุ่มบันทึกชั่วคราวด้วยตัวเองหรือไม่
  */
-function saveToLocal(fromPasswordSave = false) {
+function saveToLocal(fromPasswordSave = false, isManualAction = false) {
     const dataToSave = {
         accounts: [...accounts],
         currentAccount: currentAccount,
@@ -3224,14 +3226,23 @@ function saveToLocal(fromPasswordSave = false) {
         // ✅ บันทึก dailySummaryData ด้วย (ถ้ามี)
         dailySummaryData: dailySummaryData || {}
     };
+    
     try {
         localStorage.setItem('accountData', JSON.stringify(dataToSave));
-        if (!fromPasswordSave && !currentUser) {
-            showToast('✓ บันทึกข้อมูลชั่วคราวในเบราว์เซอร์เรียบร้อยแล้ว', 'success');
+        
+        // หากเป็นการตั้งใจกดปุ่ม "บันทึกชั่วคราว" ให้แสดงแจ้งเตือนเสมอ
+        if (isManualAction) {
+            showToast('💾 บันทึกข้อมูลชั่วคราวลงในเครื่องเรียบร้อยแล้ว', 'success');
+        } 
+        // หากเป็นการ Auto-save ในขณะที่ไม่ได้ล็อกอิน (ออฟไลน์)
+        else if (!fromPasswordSave && !currentUser) {
+            // ไม่แสดงข้อความเพื่อลดความรำคาญจาก Auto-save
+            // console.log("Auto-saved to local storage");
         }
+        
     } catch (error) {
         console.error("บันทึกข้อมูลชั่วคราวไม่สำเร็จ:", error);
-        showToast("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูลชั่วคราว", 'error');
+        showToast("❌ เกิดข้อผิดพลาดพื้นที่เต็มหรือไม่สามารถบันทึกข้อมูลชั่วคราวได้", 'error');
     }
 }
 
