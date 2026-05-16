@@ -656,9 +656,9 @@
       <button class="action-btn" onclick="initiateSingleDateExport()" style="background-color: #009688;">
         📅 เฉพาะวันที่เลือก
       </button>
-      <button class="action-btn" onclick="initiateDateRangeExport()" style="background-color: #8e44ad;">
-        📆 ตามช่วงวันที่
-      </button>
+<button class="action-btn" onclick="document.querySelector('.custom-export-card').scrollIntoView({behavior: 'smooth'});" style="background-color: #8e44ad;">
+  ⬇️ เลื่อนไปเลือกช่วงวันที่
+</button>
     </div>
 
     <div class="custom-export-card">
@@ -831,7 +831,7 @@
   window.db = db;
 </script>
 
-<script src="script.js"></script>
+<script src="script.js?v=20260516"></script>
 
 <script>
   if ('serviceWorker' in navigator) {
